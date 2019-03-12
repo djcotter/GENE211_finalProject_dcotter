@@ -1,0 +1,15 @@
+# macOS files #
+###############
+.DS_Store
+.DS_Store?
+
+# cluster information for Snakemake
+cluster/
+cluster.json
+
+# Snakemake hidden directory #
+.snakemake/
+
+# R files
+.Rhistory
+todo.md
