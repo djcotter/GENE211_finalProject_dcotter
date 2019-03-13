@@ -110,13 +110,11 @@ rule heterozygosity_by_site:
 # convert output of diversity script to BED format
 rule convert_to_BED:
     input:
-        path.join('02_diversity_by_site', 'results',
-                  '{chr}_{pop}_{sex}_pi_output_by_site.txt')
+        path.join('results', '{chr}_{pop}_{sex}_heterozygosity_by_site.txt')
     params:
         script = path.join('scripts', 'bedConvert.py')
     output:
-        path.join('02_diversity_by_site', 'results',
-                  '{chr}_{pop}_{sex}_pi_output_by_site.bed')
+        path.join('results', '{chr}_{pop}_{sex}_heterozygosity_by_site.bed')
     shell:
         "python {params.script} {input} {output}"
 
@@ -140,7 +138,7 @@ rule create_filter:
 rule filter_heterozygosity_by_site:
     input:
         het_data = path.join('results', '{chr}_{pop}_{sex}' +
-                             '_heterozygosity_by_site.txt'),
+                             '_heterozygosity_by_site.bed'),
         filter = path.join('filters', '{chr}_complete_{filter_iter}.bed')
     output:
         temp(path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
