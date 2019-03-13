@@ -1,0 +1,12 @@
+name: calculate_diversity
+channels:
+  - bioconda
+dependencies:
+  - python=3
+  - pyvcf
+  - samtools
+  - bedtools
+  - vcftools
+  - bcftools
+  - sympy
+  - numpy
