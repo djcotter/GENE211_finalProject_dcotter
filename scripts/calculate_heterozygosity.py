@@ -8,15 +8,23 @@ requires a vcf that is subset for samples of interest
 # import required modules
 import sys
 import csv
-from os import path
 import argparse
 import vcf  # installed via conda as pyvcf
+import numpy as np
+import re
 
 
 # define useful functions
-def heterozygosity_site(counts, total):
-
-    return freq
+def expected_heterozygosity(alt_counts, total_alleles):
+    """
+    Given a list of the counts of each alternate allele and the total number
+    return the expected heterozygosity at a site.
+    """
+    alt_sum = np.sum(alt_counts)
+    all_counts = [total_alleles - alt_sum] + alt_counts
+    freqs = [float(x / total_alleles) for x in all_counts]
+    h = 1 - np.sum(np.square(freqs))
+    return h
 
 
 # parse command line arguments
@@ -29,7 +37,7 @@ parser.add_argument("--vcf", nargs='?', default=sys.stdin,
 parser.add_argument("--chrom", default=None,
                     help="Provide the name of the scaffold or chromosome to" +
                     " be analyzed. Otherwise, will output all sites.")
-parser.add_argument("--outuput", nargs='?', default=sys.stdout,
+parser.add_argument("--output", nargs='?', default=True,
                     help="Output file location. Default is stdout.")
 
 # Print help/usage if no arguments are supplied
@@ -43,3 +51,23 @@ args = parser.parse_args()
 
 # initialize the vcf reader object
 vcf_reader = vcf.Reader(filename=args.vcf)
+
+# initialize results array
+results = []
+chr_num = re.compile(r'(^\d{1,2}|^[XY])')
+for record in vcf_reader:
+    if record.CHROM == args.chrom or args.chrom is None:
+        het = expected_heterozygosity(record.INFO['AC'], record.INFO['AN'])
+        chrom_string = 'chr' + chr_num.match(record.CHROM).group(1)
+        results.append([chrom_string, record.POS, het])
+
+# write the results to output_file or standard out depending on args
+if args.output is True:
+    writer = csv.writer(sys.stdout, delimiter='\t')
+    for row in results:
+        writer.writerow(row)
+else:
+    with open(args.output, 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter='\t')
+        for row in results:
+            writer.writerow(row)
