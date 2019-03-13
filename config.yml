@@ -87,7 +87,7 @@ callable_sites:
 #chromosome filters
 filters:
   filter1:
-    - UCSC_refseq_gencode_gene_transcripts_hg19.bed
+    - ncbi_refseq_genes_hg19.bed
     - simple_repeats_hg19.bed
     - centromere_telomere_hg19.bed
     - CpG_islands_hg19.bed

@@ -32,20 +32,13 @@ FILTER = ['filter1']
 WINDOW = ['100kb']
 SEX = ['individuals']
 POPS = ['YRI']
-CORRECTION = ['uncorrected']
-CHROM = ['22']
-
 
 # Rules -----------------------------------------------------------------------
 
 # Rule ALL
 rule all:
     input:
-        expand(path.join('04_window_analysis', 'results',
-                         '{pop}_{sex}_{chr}_{filter_iter}_{window}' +
-                         '_diversity.bed'),
-               pop=POPS, sex=SEX, chr=CHROM,
-               filter_iter=FILTER, window=WINDOW)
+        ""
 
 # download VCF files
 rule download_VCF_files:
@@ -59,6 +52,7 @@ rule download_VCF_files:
         urllib.request.urlretrieve(params[0], output[0])
 
 # download the panel file
+# an example of python3 urllib
 rule download_panel_file:
     params:
         url = config['panel']['data_url']
@@ -99,32 +93,29 @@ rule subset_and_filter_VCF:
 # calculate heterozygostiy on the autosomes by site
 rule heterozygosity_by_site:
     input:
-        population = path.join('populations', '{pop}_{sex}'),
-        vcf = path.join('data', 'subset_{chr}_{pop}_{sex}.vcf')
+        path.join('data', 'subset_{chr}_{pop}_{sex}.vcf')
     params:
-        calc_pi = path.join('scripts', 'calculate_heterozygosity.py'),
-        out_dir = path.join('02_diversity_by_site', 'results/'),
+        script = path.join('scripts', 'calculate_heterozygosity.py'),
         chrom = lambda wildcards: wildcards.chr[3:]
     output:
         temp(path.join('results',
-                       '{pop}_{sex}_{chr}_heterozygosity_by_site.txt'))
+                       '{chr}_{pop}_{sex}_heterozygosity_by_site.txt'))
     conda:
         path.join('envs', 'calculate_diversity.yml')
     shell:
-        "python {params.calc_pi} --vcf {input.vcf} "
-        "--population_lists {input.population} --chrom_inc {params.chrom} "
-        "--out_directory {params.out_dir}"
+        "python {params.script} --vcf {input} --chrom {params.chrom} "
+        "--output {output}"
 
 # convert output of diversity script to BED format
 rule convert_to_BED:
     input:
         path.join('02_diversity_by_site', 'results',
-                  '{pop}_{sex}_{chr}_pi_output_by_site.txt')
+                  '{chr}_{pop}_{sex}_pi_output_by_site.txt')
     params:
         script = path.join('scripts', 'bedConvert.py')
     output:
         path.join('02_diversity_by_site', 'results',
-                  '{pop}_{sex}_{chr}_pi_output_by_site.bed')
+                  '{chr}_{pop}_{sex}_pi_output_by_site.bed')
     shell:
         "python {params.script} {input} {output}"
 
@@ -132,73 +123,80 @@ rule convert_to_BED:
 rule create_filter:
     input:
         lambda wildcards: expand(
-            '03_filters/raw_filters/{filter_type}',
+            path.join('data', 'raw_filters', '{filter_type}'),
             filter_type=config["filters"][wildcards.filter_iter])
     params:
         chrom = lambda wildcards: wildcards.chr
     output:
-        path.join('03_filters', 'results',
-                  'complete_{chr}_{filter_iter}.bed')
+        path.join('filters', '{chr}_complete_{filter_iter}.bed')
+    conda:
+        path.join('envs', 'calculate_diversity.yml')
     shell:
         "cat {input} | grep {params.chrom} | sort -k1,1 -k2,2n | "
         "cut -f1,2,3 | bedtools merge -i stdin > {output}"
 
 # filter the BED output of the diversity file
-rule filter_diversity_by_site:
+rule filter_heterozygosity_by_site:
     input:
-        diversity_by_site = path.join('02_diversity_by_site', 'results',
-                                      '{pop}_{sex}_{chr}' +
-                                      '_pi_output_by_site.bed'),
-        filtered_callable = path.join('04_window_analysis', 'inputs',
-                                      'callable_sites_{chr}_{filter_iter}.bed')
+        het_data = path.join('results', '{chr}_{pop}_{sex}' +
+                             '_heterozygosity_by_site.txt'),
+        filter = path.join('filters', '{chr}_complete_{filter_iter}.bed')
     output:
-        path.join('04_window_analysis', 'inputs',
-                  '{pop}_{sex}_{chr}_{filter_iter}' +
-                  '_pi_by_site.bed')
+        temp(path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                       '_heterozygosity_by_site.bed'))
+    conda:
+        path.join('envs', 'calculate_diversity.yml')
     shell:
-        "bedtools intersect -a {input.diversity_by_site} "
-        "-b {input.filtered_callable} > {output}"
+        "bedtools subtract -a {input.het_data} -b {input.filter} > {output}"
 
-rule window_analysis:
+# renames the file and makes them permanent
+# (which is not the case with temp autosome files)
+rule rename_sexChr_files:
     input:
-        filtered_diversity = path.join('04_window_analysis', 'inputs',
-                                       '{pop}_{sex}_{chr}_{filter_iter}' +
-                                       '_pi_by_site.bed'),
-        filtered_callable = path.join('04_window_analysis', 'inputs',
-                                      'callable_sites_{chr}_' +
-                                      '{filter_iter}.bed'),
-        windows = path.join('04_window_analysis', 'inputs',
-                            '{chr}_{window}_window.bed')
-    params:
-        window_calcs = path.join('04_window_analysis', 'scripts',
-                                 'window_calculations.py'),
-        slide = lambda wildcards: '' if \
-            config["windows"][wildcards.window]["overlap"] is False else \
-            '--sliding ',
-        replicates = 1000
+        path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                  '_heterozygosity_by_site.bed')
     output:
-        temp(path.join('04_window_analysis', 'results',
-                       '{pop}_{sex}_{chr}_{filter_iter}_{window}' +
-                       '_diversity.unfiltered.bed'))
+        path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                  '_heterozygosity_by_site.txt')
+    wildcard_constraints:
+        chr = "chr([XY])"
     shell:
-        "python {params.window_calcs} --diversity {input.filtered_diversity} "
-        "--callable {input.filtered_callable} --windows {input.windows} "
-        "{params.slide}--replicates {params.replicates} --output {output}"
+        "cp {input} {output}"
 
-rule filter_windows_by_callable_sites:
+# combines heterozygosity by site info into a single autosome file
+rule combine_autosome_heterozygosity:
     input:
-        path.join('04_window_analysis', 'results',
-                  '{pop}_{sex}_{chr}_{filter_iter}_{window}' +
-                  '_diversity.unfiltered.bed')
-    params:
-        script = path.join('04_window_analysis', 'scripts',
-                           'filter_windows_byCallableSites.py'),
-        winSize = lambda wildcards:
-            config["windows"][wildcards.window]["win_size"]
+        lambda wildcards: expand(
+            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                      '_heterozygosity_by_site.bed'),
+            pop=wildcards.pop, sex=wildcards.sex,
+            chr=['chr' + str(i) for i in range(1, 23)],
+            filter_iter=wildcards.filter_iter)
     output:
-        path.join('04_window_analysis', 'results',
-                  '{pop}_{sex}_{chr}_{filter_iter}_{window}' +
-                  '_diversity.bed')
+        path.join('results', '{pop}_{sex}_{filter_iter}_autosomes_' +
+                  'heterozygosity_by_site.txt')
     shell:
-        "python {params.script} --input {input} --windowSize {params.winSize} "
-        "--filter 0.1 --output {output}"
+        "cat {input} > {output}"
+
+rule calculate_mean_heterozygosity:
+    input:
+        autosomes = lambda wildcards: expand(
+            path.join('results', '{pop}_{sex}_{filter_iter}_autosomes_' +
+                      'heterozygosity_by_site.txt'),
+            pop=POPS, sex=wildcards.sex, filter_iter=wildcards.filter_iter),
+        chrX = lambda wildcards: expand(
+            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                      '_heterozygosity_by_site.txt'),
+            chr='chrX', pop=POPS, sex=wildcards.sex,
+            filter_iter=wildcards.filter_iter),
+        chrY = lambda wildcards: expand(
+            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
+                      '_heterozygosity_by_site.txt'),
+            chr='chrY', pop=POPS, sex='males',
+            filter_iter=wildcards.filter_iter)
+    params:
+        script = path.join('scripts', 'get_mean_heterozygosity.py')
+    output:
+        path.join('results', 'mean_heterozygosity_{sex}_{filter_iter}.txt')
+    shell:
+        ""
