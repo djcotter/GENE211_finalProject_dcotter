@@ -20,7 +20,7 @@ with open(input_file, 'rU') as f:
 
 # modify coordinates and write out diversity files
 with open(output_file, 'w') as csvfile:
-    writer = csv.writer(csvfile, delimiter='\t', newline='\n')
+    writer = csv.writer(csvfile, delimiter='\t')
     for info in positions:
         writer.writerow(['chr' + info[0], str(int(info[1]) - 1),
                          info[1], info[2]])
