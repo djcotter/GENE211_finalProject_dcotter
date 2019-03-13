@@ -97,11 +97,11 @@ for pop in data:
 
 # write the results to output_file or standard out depending on args
 if args.output is True:
-    writer = csv.writer(sys.stdout, delimiter='\t')
+    writer = csv.writer(sys.stdout, delimiter='\t', newline='\n')
     for row in results:
         writer.writerow(row)
 else:
     with open(args.output, 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter='\t')
+        writer = csv.writer(csvfile, delimiter='\t', newline='\n')
         for row in results:
             writer.writerow(row)
