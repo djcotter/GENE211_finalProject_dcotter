@@ -1,0 +1,38 @@
+{
+  "Populations": [
+    "SAS",
+    "EAS",
+    "AMR",
+    "AFR",
+    "EUR",
+    "ALL"
+  ],
+  "Subpopulations": [
+    "GBR",
+    "FIN",
+    "CHS",
+    "PUR",
+    "CDX",
+    "CLM",
+    "IBS",
+    "PEL",
+    "PJL",
+    "KHV",
+    "ACB",
+    "GWD",
+    "ESN",
+    "BEB",
+    "MSL",
+    "STU",
+    "ITU",
+    "CEU",
+    "YRI",
+    "CHB",
+    "JPT",
+    "LWK",
+    "ASW",
+    "MXL",
+    "TSI",
+    "GIH"
+  ]
+}
