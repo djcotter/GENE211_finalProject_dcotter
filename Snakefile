@@ -29,16 +29,17 @@ SUBPOPULATIONS = sorted(json.load(open(config['POP_CODES']))['Subpopulations'])
 
 # specify filter, window size, sex, and populations to be analyzed
 FILTER = ['filter1']
-WINDOW = ['100kb']
 SEX = ['individuals']
-POPS = ['YRI']
+POPS = SUBPOPULATIONS
 
 # Rules -----------------------------------------------------------------------
 
 # Rule ALL
 rule all:
     input:
-        ""
+        expand(path.join('results',
+                         'mean_heterozygosity_{sex}_{filter_iter}.txt'),
+               sex=SEX, filter_iter=FILTER)
 
 # download VCF files
 rule download_VCF_files:
@@ -195,8 +196,11 @@ rule calculate_mean_heterozygosity:
             chr='chrY', pop=POPS, sex='males',
             filter_iter=wildcards.filter_iter)
     params:
-        script = path.join('scripts', 'get_mean_heterozygosity.py')
+        script = path.join('scripts', 'get_mean_heterozygosity.py'),
+        replicates = 10000
     output:
         path.join('results', 'mean_heterozygosity_{sex}_{filter_iter}.txt')
     shell:
-        ""
+        "python {params.script} --input_files {input.autosomes} "
+        "{input.chrX} {input.chrY} --replicates {params.replicates} "
+        "--output {output}"
