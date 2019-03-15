@@ -31,6 +31,7 @@ SUBPOPULATIONS = sorted(json.load(open(config['POP_CODES']))['Subpopulations'])
 FILTER = ['filter1']
 SEX = ['individuals']
 POPS = SUBPOPULATIONS
+CHROM = ['chr8']
 
 # Rules -----------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ POPS = SUBPOPULATIONS
 rule all:
     input:
         expand(path.join('results',
-                         'mean_heterozygosity_{sex}_{filter_iter}.txt'),
+                         'merged_heterozygosity_{sex}_{filter_iter}.txt'),
                sex=SEX, filter_iter=FILTER)
 
 # download VCF files
@@ -141,64 +142,35 @@ rule filter_heterozygosity_by_site:
                              '_heterozygosity_by_site.bed'),
         filter = path.join('filters', '{chr}_complete_{filter_iter}.bed')
     output:
-        temp(path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                       '_heterozygosity_by_site.bed'))
+        temp(path.join('results', '{chr}_{pop}_{sex}' +
+                       '_heterozygosity_by_site_{filter_iter}.bed'))
     conda:
         path.join('envs', 'calculate_diversity.yml')
     shell:
         "bedtools subtract -a {input.het_data} -b {input.filter} > {output}"
 
-# renames the file and makes them permanent
-# (which is not the case with temp autosome files)
-rule rename_sexChr_files:
-    input:
-        path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                  '_heterozygosity_by_site.bed')
-    output:
-        path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                  '_heterozygosity_by_site.txt')
-    wildcard_constraints:
-        chr = "chr([XY])"
-    shell:
-        "cp {input} {output}"
-
-# combines heterozygosity by site info into a single autosome file
-rule combine_autosome_heterozygosity:
-    input:
-        lambda wildcards: expand(
-            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                      '_heterozygosity_by_site.bed'),
-            pop=wildcards.pop, sex=wildcards.sex,
-            chr=['chr' + str(i) for i in range(1, 23)],
-            filter_iter=wildcards.filter_iter)
-    output:
-        path.join('results', '{pop}_{sex}_{filter_iter}_autosomes_' +
-                  'heterozygosity_by_site.txt')
-    shell:
-        "cat {input} > {output}"
-
-rule calculate_mean_heterozygosity:
+# given a file of heterozygosity_by_site return a single mean with 95% CI
+rule merge_heterozygosity_output:
     input:
         autosomes = lambda wildcards: expand(
-            path.join('results', '{pop}_{sex}_{filter_iter}_autosomes_' +
-                      'heterozygosity_by_site.txt'),
-            pop=POPS, sex=wildcards.sex, filter_iter=wildcards.filter_iter),
+            path.join('results', '{chr}_{pop}_{sex}' +
+                      '_heterozygosity_by_site_{filter_iter}.bed'),
+            chr=CHROM, pop=POPS, sex=wildcards.sex,
+            filter_iter=wildcards.filter_iter),
         chrX = lambda wildcards: expand(
-            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                      '_heterozygosity_by_site.txt'),
+            path.join('results', '{chr}_{pop}_{sex}' +
+                      '_heterozygosity_by_site_{filter_iter}.bed'),
             chr='chrX', pop=POPS, sex=wildcards.sex,
             filter_iter=wildcards.filter_iter),
         chrY = lambda wildcards: expand(
-            path.join('results', '{chr}_{pop}_{sex}_{filter_iter}' +
-                      '_heterozygosity_by_site.txt'),
+            path.join('results', '{chr}_{pop}_{sex}' +
+                      '_heterozygosity_by_site_{filter_iter}.bed'),
             chr='chrY', pop=POPS, sex='males',
             filter_iter=wildcards.filter_iter)
     params:
-        script = path.join('scripts', 'get_mean_heterozygosity.py'),
-        replicates = 10000
+        script = path.join('scripts', 'merge_heterozygosity.py'),
     output:
-        path.join('results', 'mean_heterozygosity_{sex}_{filter_iter}.txt')
+        path.join('results', 'merged_heterozygosity_{sex}_{filter_iter}.txt')
     shell:
         "python {params.script} --input_files {input.autosomes} "
-        "{input.chrX} {input.chrY} --replicates {params.replicates} "
-        "--output {output}"
+        "{input.chrX} {input.chrY} --output {output}"
