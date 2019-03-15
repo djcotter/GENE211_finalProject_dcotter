@@ -9,7 +9,6 @@ requires a vcf that is subset for samples of interest
 import sys
 import csv
 import argparse
-import numpy as np
 import re
 import os
 
@@ -20,37 +19,9 @@ def get_pop_chr(filepath):
     Return the population code and chromosome code from the filename provided
     """
     pop_pattern = re.compile(r'[A-Z]{3}')
-    chr_pattern = re.compile(r'chrX|chrY|autosomes')
+    chr_pattern = re.compile(r'chr([XY]{1}|\d+)')
     filename = os.path.basename(filepath)
     return [pop_pattern.match(filename), chr_pattern.match(filename)]
-
-
-# Bootstrap functions
-def rand_samples(data_array):
-    """
-    Create a randomly dsitributed set of data based on a given array and
-    the length of the given data array
-    """
-    array_len = len(data_array)
-    if array_len > 0:
-        indices = np.random.randint(array_len - 1, size=array_len)
-        return [data_array[i] for i in indices]
-    else:
-        return []
-
-
-def bootstrap_CI_mean(data_array, replicates):
-    """
-    Bootstraps the data to get a 95% confidence interval of the mean
-    returns a list with the mean
-    """
-    resamples = []
-    for i in range(replicates):
-        samples = rand_samples(data_array)
-        if samples:
-            resamples.append(np.mean(samples))
-    return [np.nanpercentile(resamples, 2.5),
-            np.nanpercentile(resamples, 97.5)]
 
 
 # parse command line arguments
@@ -60,9 +31,6 @@ parser.add_argument("--input_files", nargs='+',
                     help="List of all input files for means to be calculated.")
 parser.add_argument("--output", nargs='?', default=True,
                     help="Merged output file. Default is stdout.")
-parser.add_argument("--replicates", nargs='?', type=int, default=1000,
-                    help="number of times the bootstrap " +
-                    "should resample. Default is 1000.")
 
 # Print help/usage if no arguments are supplied
 if len(sys.argv) == 1:
@@ -83,11 +51,11 @@ for file in args.input_files:
     # open the file and grab all heterozygosity values
     with open(file, 'r') as f:
         het_vals = []
-        for line in file:
-            het_vals.append(float(line[2]))
-    # write the mean and CI to a line in the dictionary
-    data[pop][chrom] = [pop, chr, np.mean(het_vals)] + \
-        bootstrap_CI_mean[het_vals, args.replicates]
+        for line in f:
+            line = line.strip().split('\t')
+            het_vals.append(float(line[3]))
+    # write the pop, chr, and het values to a list in the dictionary
+    data[pop][chrom] = [pop, chr, het_vals.join(',')]
 
 # reformat data to be output
 results = []
