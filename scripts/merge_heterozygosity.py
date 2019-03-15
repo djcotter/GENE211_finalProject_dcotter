@@ -55,12 +55,13 @@ for file in args.input_files:
             line = line.strip().split('\t')
             het_vals.append(line[3])
     # write the pop, chr, and het values to a list in the dictionary
-    data[pop][chrom] = [pop, chr, ','.join(het_vals)]
+    data[pop][chrom] = [pop, chrom, ','.join(het_vals)]
+    print("{} merged".format(file))
 
 # reformat data to be output
 results = []
-for pop in data:
-    for chr in pop:
+for item in data:
+    for chr in item:
         results.append(chr)
 
 # write the results to output_file or standard out depending on args
