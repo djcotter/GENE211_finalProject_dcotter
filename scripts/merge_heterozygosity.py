@@ -55,7 +55,7 @@ for file in args.input_files:
             line = line.strip().split('\t')
             het_vals.append(float(line[3]))
     # write the pop, chr, and het values to a list in the dictionary
-    data[pop][chrom] = [pop, chr, het_vals.join(',')]
+    data[pop][chrom] = [pop, chr, ','.join(het_vals)]
 
 # reformat data to be output
 results = []
