@@ -21,7 +21,8 @@ def get_pop_chr(filepath):
     pop_pattern = re.compile(r'[A-Z]{3}')
     chr_pattern = re.compile(r'chr([XY]{1}|\d+)')
     filename = os.path.basename(filepath)
-    return [pop_pattern.match(filename), chr_pattern.match(filename)]
+    return [pop_pattern.search(filename)[0],
+            chr_pattern.search(filename)[0]]
 
 
 # parse command line arguments
@@ -61,8 +62,8 @@ for file in args.input_files:
 # reformat data to be output
 results = []
 for item in data:
-    for chr in item:
-        results.append(chr)
+    for chr in data[item]:
+        results.append(data[item][chr])
 
 # write the results to output_file or standard out depending on args
 if args.output is True:
