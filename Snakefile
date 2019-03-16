@@ -38,9 +38,10 @@ CHROM = ['chr8']
 # Rule ALL
 rule all:
     input:
-        expand(path.join('results',
-                         'merged_heterozygosity_{sex}_{filter_iter}.txt'),
-               sex=SEX, filter_iter=FILTER)
+        expand(
+            path.join('results',
+                      '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt'),
+            chr=['chr8', 'chrX', 'chrY'], sex=SEX, filter_iter=FILTER)
 
 # download VCF files
 rule download_VCF_files:
