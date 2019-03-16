@@ -41,7 +41,7 @@ rule all:
         expand(
             path.join('results',
                       '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt'),
-            chr=['chr8', 'chrX', 'chrY'], sex=SEX, filter_iter=FILTER)
+            chr=['chr8', 'chrX'], sex=SEX, filter_iter=FILTER)
 
 # download VCF files
 rule download_VCF_files:
