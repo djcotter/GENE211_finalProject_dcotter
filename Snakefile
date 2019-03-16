@@ -156,7 +156,7 @@ rule merge_heterozygosity_output:
         lambda wildcards: expand(
             path.join('results', '{chr}_{pop}_{sex}' +
                       '_heterozygosity_by_site_{filter_iter}.bed'),
-            chr=wildcard.chr, pop=POPS, sex=wildcards.sex,
+            chr=wildcards.chr, pop=POPS, sex=wildcards.sex,
             filter_iter=wildcards.filter_iter)
     params:
         script = path.join('scripts', 'merge_heterozygosity.py'),
@@ -164,5 +164,4 @@ rule merge_heterozygosity_output:
         path.join('results',
                   '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt')
     shell:
-        "python {params.script} --input_files {input.autosomes} "
-        "{input.chrX} {input.chrY} --output {output}"
+        "python {params.script} --input_files {input} --output {output}"
