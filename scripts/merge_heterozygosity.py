@@ -30,8 +30,8 @@ parser = argparse.ArgumentParser(description="Determines mean heterozygosity" +
                                              " for all input files")
 parser.add_argument("--input_files", nargs='+',
                     help="List of all input files for means to be calculated.")
-parser.add_argument("--output", nargs='?', default=True,
-                    help="Merged output file. Default is stdout.")
+parser.add_argument("--output", nargs='?', required=True,
+                    help="Merged output file.")
 
 # Print help/usage if no arguments are supplied
 if len(sys.argv) == 1:
@@ -41,37 +41,18 @@ if len(sys.argv) == 1:
 args = parser.parse_args()
 
 # begin script ----------------------------------------------------------------
-# initialize data dictionary
-data = {}
+# loop through all provided files and write each line to output
+with open(args.output, 'w') as csvfile:
+    writer = csv.writer(csvfile, delimiter='\t')
 
-# loop through all provided files
-for file in args.input_files:
-    pop, chrom = get_pop_chr(file)
-    if pop not in data:
-        data[pop] = {}
-    # open the file and grab all heterozygosity values
-    with open(file, 'r') as f:
-        het_vals = []
-        for line in f:
-            line = line.strip().split('\t')
-            het_vals.append(line[3])
-    # write the pop, chr, and het values to a list in the dictionary
-    data[pop][chrom] = [pop, chrom, ','.join(het_vals)]
-    print("{} merged".format(file))
-
-# reformat data to be output
-results = []
-for item in data:
-    for chr in data[item]:
-        results.append(data[item][chr])
-
-# write the results to output_file or standard out depending on args
-if args.output is True:
-    writer = csv.writer(sys.stdout, delimiter='\t')
-    for row in results:
-        writer.writerow(row)
-else:
-    with open(args.output, 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter='\t')
-        for row in results:
-            writer.writerow(row)
+    for file in args.input_files:
+        pop, chrom = get_pop_chr(file)
+        # open the file and grab all heterozygosity values
+        with open(file, 'r') as f:
+            het_vals = []
+            for line in f:
+                line = line.strip().split('\t')
+                het_vals.append(line[3])
+        # write the pop, chr, and het values to a list in the dictionary
+        writer.writerow([pop, chrom, ','.join(het_vals)])
+        print("{} merged".format(file))
