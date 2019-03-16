@@ -49,10 +49,8 @@ with open(args.output, 'w') as csvfile:
         pop, chrom = get_pop_chr(file)
         # open the file and grab all heterozygosity values
         with open(file, 'r') as f:
-            het_vals = []
             for line in f:
                 line = line.strip().split('\t')
-                het_vals.append(line[3])
-        # write the pop, chr, and het values to a list in the dictionary
-        writer.writerow([pop, chrom, ','.join(het_vals)])
+                writer.writerow([pop, chrom, line[3]])
+
         print("{} merged".format(file))
