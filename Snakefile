@@ -152,25 +152,16 @@ rule filter_heterozygosity_by_site:
 # given a file of heterozygosity_by_site return a single mean with 95% CI
 rule merge_heterozygosity_output:
     input:
-        autosomes = lambda wildcards: expand(
+        lambda wildcards: expand(
             path.join('results', '{chr}_{pop}_{sex}' +
                       '_heterozygosity_by_site_{filter_iter}.bed'),
-            chr=CHROM, pop=POPS, sex=wildcards.sex,
-            filter_iter=wildcards.filter_iter),
-        chrX = lambda wildcards: expand(
-            path.join('results', '{chr}_{pop}_{sex}' +
-                      '_heterozygosity_by_site_{filter_iter}.bed'),
-            chr='chrX', pop=POPS, sex=wildcards.sex,
-            filter_iter=wildcards.filter_iter),
-        chrY = lambda wildcards: expand(
-            path.join('results', '{chr}_{pop}_{sex}' +
-                      '_heterozygosity_by_site_{filter_iter}.bed'),
-            chr='chrY', pop=POPS, sex='males',
+            chr=wildcard.chr, pop=POPS, sex=wildcards.sex,
             filter_iter=wildcards.filter_iter)
     params:
         script = path.join('scripts', 'merge_heterozygosity.py'),
     output:
-        path.join('results', 'merged_heterozygosity_{sex}_{filter_iter}.txt')
+        path.join('results',
+                  '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt')
     shell:
         "python {params.script} --input_files {input.autosomes} "
         "{input.chrX} {input.chrY} --output {output}"
