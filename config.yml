@@ -81,6 +81,8 @@ panel:
   data_url: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 
 # define the number of callable sites to use as a denominator
+# these numbers come from intersecting the filter for a chromosome with the Strict Mask from 1000 Genomes
+# the resulting 'filtered' callable sites file is then summed across a chromosome to get the value below
 callable_sites:
   filter1:
     chr8: 61718084
