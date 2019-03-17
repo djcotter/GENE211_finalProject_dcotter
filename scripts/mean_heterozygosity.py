@@ -32,6 +32,8 @@ parser = argparse.ArgumentParser(description="Determines mean heterozygosity" +
                                              " for all input files")
 parser.add_argument("--input_files", nargs='+',
                     help="List of all input files for means to be calculated.")
+parser.add_argument("--callable", required=True, type=int,
+                    help="Integer specifying the number of callable sites.")
 parser.add_argument("--output", nargs='?', required=True,
                     help="Merged output file.")
 
@@ -56,7 +58,7 @@ with open(args.output, 'w') as csvfile:
                 line = line.strip().split('\t')
                 het_vals.append(float(line[3]))
             n = len(het_vals)
-            avg = np.mean(het_vals)
+            avg = np.sum(het_vals) / args.callable
             sem = stats.sem(het_vals)
             h = sem * stats.t.ppf((1 + 0.95) / 2, n - 1)
             writer.writerow([pop, chrom, avg,

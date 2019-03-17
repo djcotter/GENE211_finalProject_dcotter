@@ -80,9 +80,12 @@ panel:
   project_path: data/integrated_call_samples_v3.20130502.ALL.panel
   data_url: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 
+# define the number of callable sites to use as a denominator
 callable_sites:
-  project_path: data/20141020.strict_mask.whole_genome.bed
-  data_url: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/20141020.strict_mask.whole_genome.bed
+  filter1:
+    chr8: 61718084
+    chrX: 69464840
+    chrY: 6193537
 
 #chromosome filters
 filters:

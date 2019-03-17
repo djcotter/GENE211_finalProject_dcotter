@@ -160,8 +160,11 @@ rule mean_heterozygosity:
             filter_iter=wildcards.filter_iter)
     params:
         script = path.join('scripts', 'mean_heterozygosity.py'),
+        callable = lambda wildcards: \
+            config[callable_sites][wildcards.filter_iter][wildcards.chr]
     output:
         path.join('results',
                   '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt')
     shell:
-        "python {params.script} --input_files {input} --output {output}"
+        "python {params.script} --input_files {input} --callable "
+        "{params.callable} --output {output}"
