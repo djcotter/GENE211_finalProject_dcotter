@@ -54,7 +54,7 @@ with open(args.output, 'w') as csvfile:
             het_vals = []
             for line in f:
                 line = line.strip().split('\t')
-                het_vals.append(line[3])
+                het_vals.append(float(line[3]))
             n = len(het_vals)
             avg = np.mean(het_vals)
             sem = stats.sem(het_vals)
