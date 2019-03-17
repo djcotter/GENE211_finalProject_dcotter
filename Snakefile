@@ -38,10 +38,12 @@ CHROM = ['chr8']
 # Rule ALL
 rule all:
     input:
-        expand(
-            path.join('results',
-                      '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt'),
-            chr=['chr8', 'chrX'], sex=SEX, filter_iter=FILTER)
+        expand(path.join('figures', '{chr}_{sex}_{filter_iter}_average_' +
+                         'heterozygosity_by_population.pdf'),
+               chr=CHROM, sex=SEX, filter_iter=FILTER),
+        expand(path.join('figures', '{pop}_{chr}_sexChrs_{sex}_' +
+                         '{filter_iter}_average_heterozygosity.pdf'),
+               pop='YRI', chr=CHROM, sex=SEX, filter_iter=FILTER)
 
 # download VCF files
 rule download_VCF_files:
@@ -168,3 +170,50 @@ rule mean_heterozygosity:
     shell:
         "python {params.script} --input_files {input} --callable "
         "{params.callable} --output {output}"
+
+# plot the output by population
+rule plot_by_pop:
+    input:
+        path.join('results',
+                  '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt')
+    params:
+        script = path.join('scripts', 'het_byPop.R')
+    output:
+        path.join('figures', '{chr}_{sex}_{filter_iter}_average_' +
+                  'heterozygosity_by_population.pdf')
+    conda:
+        path.join('envs', 'R_plots.yml')
+    shell:
+        "Rscript {params.script} --input {input} --output {output}"
+
+# step to merge mean het files for final plot
+rule merge_mean_heterozygosity:
+    input:
+        autosome = path.join('results', '{chr}_merged_heterozygosity' +
+                             '_{sex}_{filter_iter}.txt'),
+        chrX = path.join('results', 'chrX_merged_heterozygosity' +
+                         '_{sex}_{filter_iter}.txt'),
+        chrY = path.join('results', 'chrY_merged_heterozygosity' +
+                         '_males_{filter_iter}.txt')
+    output:
+        temp(path.join('results', 'merged_{chr}_sexChrs_{sex}_' +
+                       '{filter_iter}.txt'))
+    shell:
+        "cat {input.autosome} {input.chrX} {input.chrY} > {output}"
+
+# plot the sex chromosomes and an autosome for a specified population
+rule plot_by_region:
+    input:
+        path.join('results', 'merged_{chr}_sexChrs_{sex}_' +
+                  '{filter_iter}.txt')
+    params:
+        script = path.join('scripts', 'het_byRegion.R'),
+        population = lambda wildcards: wildcards.pop
+    output:
+        path.join('figures', '{pop}_{chr}_sexChrs_{sex}_{filter_iter}_' +
+                  'average_heterozygosity.pdf')
+    conda:
+        path.join('envs', 'R_plots.yml')
+    shell:
+        "Rscript {params.script} --input {input} --pop {params.population} "
+        "--output {output}"
