@@ -1,8 +1,13 @@
 name: R_plots
 channels:
+  - conda-forge
   - r
+  - bioconda
+  - defaults
 dependencies:
   # R packages:
   - r-base
   - r-optparse
   - r-ggplot2
+  - r-tidyverse
+  - r-ggpubr
