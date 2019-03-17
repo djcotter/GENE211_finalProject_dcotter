@@ -59,6 +59,7 @@ with open(args.output, 'w') as csvfile:
             avg = np.mean(het_vals)
             sem = stats.sem(het_vals)
             h = sem * stats.t.ppf((1 + 0.95) / 2, n - 1)
-            writer.writerow([pop, chrom, line[3]])
+            writer.writerow([pop, chrom, avg,
+                             avg - h, avg + h, avg - sem, avg + sem])
 
         print("{} merged".format(file))
