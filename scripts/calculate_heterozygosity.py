@@ -5,7 +5,7 @@ Daniel Cotter
 calculates heterozygosity at every locus in a vcf file
 requires a vcf that is subset for samples of interest
 """
-# import required modules
+# import required modules -----------------------------------------------------
 import sys
 import csv
 import argparse
@@ -14,7 +14,7 @@ import numpy as np
 import re
 
 
-# define useful functions
+# define useful functions -----------------------------------------------------
 def expected_heterozygosity(alt_counts, total_alleles):
     """
     Given a list of the counts of each alternate allele and the total number
@@ -56,7 +56,9 @@ vcf_reader = vcf.Reader(filename=args.vcf)
 results = []
 chr_num = re.compile(r'(^\d{1,2}|^[XY])')
 for record in vcf_reader:
+    # test that the chromosome is correct
     if record.CHROM == args.chrom or args.chrom is None:
+        # use the info stored in the VCF to calculate heterozygosity
         het = expected_heterozygosity(record.INFO['AC'], record.INFO['AN'])
         chrom_string = 'chr' + chr_num.match(record.CHROM).group(1)
         results.append([chrom_string, record.POS, het])
