@@ -11,6 +11,8 @@ import csv
 import argparse
 import re
 import os
+from scipy import stats
+import numpy as np
 
 
 # define useful functions -----------------------------------------------------
@@ -49,8 +51,14 @@ with open(args.output, 'w') as csvfile:
         pop, chrom = get_pop_chr(file)
         # open the file and grab all heterozygosity values
         with open(file, 'r') as f:
+            het_vals = []
             for line in f:
                 line = line.strip().split('\t')
-                writer.writerow([pop, chrom, line[3]])
+                het_vals.append(line[3])
+            n = len(het_vals)
+            avg = np.mean(het_vals)
+            sem = stats.sem(het_vals)
+            h = sem * stats.t.ppf((1 + 0.95) / 2, n - 1)
+            writer.writerow([pop, chrom, line[3]])
 
         print("{} merged".format(file))

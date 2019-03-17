@@ -151,7 +151,7 @@ rule filter_heterozygosity_by_site:
         "bedtools subtract -a {input.het_data} -b {input.filter} > {output}"
 
 # given a file of heterozygosity_by_site return a single mean with 95% CI
-rule merge_heterozygosity_output:
+rule mean_heterozygosity:
     input:
         lambda wildcards: expand(
             path.join('results', '{chr}_{pop}_{sex}' +
@@ -159,7 +159,7 @@ rule merge_heterozygosity_output:
             chr=wildcards.chr, pop=POPS, sex=wildcards.sex,
             filter_iter=wildcards.filter_iter)
     params:
-        script = path.join('scripts', 'merge_heterozygosity.py'),
+        script = path.join('scripts', 'mean_heterozygosity.py'),
     output:
         path.join('results',
                   '{chr}_merged_heterozygosity_{sex}_{filter_iter}.txt')
